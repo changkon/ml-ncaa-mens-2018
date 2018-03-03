@@ -102,3 +102,7 @@ ENV/
 
 # input files
 input/*
+
+# ide stuff
+.idea
+.vscode
