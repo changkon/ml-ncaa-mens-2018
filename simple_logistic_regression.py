@@ -3,14 +3,13 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
 from advanced_stats_starter import get_adv_season_stats
-import sklearn.metrics as metrics
+from submission_simulation import simulate_submit
 
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
 submission = pd.read_csv("input/SampleSubmissionStage1.csv")
-# playoff_results = pd.read_csv("input/NCAATourneyDetailedResults.csv")
 compact_playoff_results = pd.read_csv("input/NCAATourneyCompactResults.csv")
 playoff_seeds = pd.read_csv("input/NCAATourneySeeds.csv")
 seasons_results = pd.read_csv("input/RegularSeasonDetailedResults.csv")
@@ -22,7 +21,7 @@ def seed_to_int(seed):
     return s_int
 
 # lets use data from 2003-2013 to train the modal
-train = compact_playoff_results.loc[(compact_playoff_results['Season'] >= 2003) & (compact_playoff_results['Season'] <= 2013)]
+train = compact_playoff_results.loc[(compact_playoff_results['Season'] >= 2010) & (compact_playoff_results['Season'] <= 2013)]
 train = train.drop(['DayNum', 'WScore', 'LScore', 'WLoc', 'NumOT'], axis=1)
 
 train_stats = ['Season', 'TeamID', 'ORating', 'DRating']
@@ -54,6 +53,9 @@ train_copy['Result'] = 0
 
 train = pd.concat([train, train_copy], ignore_index=True)
 
+# Print to show training data used
+print(train.head(n=5))
+
 y_train = train['Result'].values
 X_train = train.drop('Result', axis=1)
 
@@ -80,45 +82,6 @@ prediction['SeedDiff'] = prediction.WSeed - prediction.LSeed
 prediction = prediction.drop(['Season', 'WTeamID', 'LTeamID'], axis=1)
 
 submission['Pred'] = clf.predict_proba(prediction)
-
-print(submission.head())
+simulate_submit(submission)
 
 # submission.to_csv('logreg_seed_starter.csv', index=False)
-
-# create a local function to meausre the logloss so don't have submit every time
-val_start_year = 2014
-val_end_year = 2017
-
-val_results = compact_playoff_results.loc[(compact_playoff_results['Season'] >= val_start_year) & (compact_playoff_results['Season'] <= val_end_year)]
-val_results = val_results.loc[val_results['DayNum'] >= 136]
-val_results = val_results.drop(['DayNum', 'WScore', 'LScore', 'WLoc', 'NumOT'], axis=1)
-
-
-def create_id(row):
-    row_id = str(row.Season) + '_'
-
-    if row.WTeamID < row.LTeamID:
-        row_id = row_id + str(row.WTeamID) + '_' + str(row.LTeamID)
-    else:
-        row_id = row_id + str(row.LTeamID) + '_' + str(row.WTeamID)
-
-    return row_id
-
-
-def get_result(row):
-    if row.WTeamID < row.LTeamID:
-        return 1
-    else:
-        return 0
-
-val_results['ID'] = val_results.apply(create_id, axis=1)
-val_results['Result'] = val_results.apply(get_result, axis=1)
-val_results = val_results.drop(['WTeamID', 'LTeamID'], axis=1)
-
-final_comparison = submission.merge(val_results, on='ID')
-
-print('final log loss: ', metrics.log_loss(final_comparison['Result'], final_comparison['Pred']))
-
-for target_season in final_comparison.Season.unique():
-    temp = final_comparison[ final_comparison['Season'] == target_season]
-    print('Season ', target_season, ' log loss: ', metrics.log_loss(temp['Result'], temp['Pred']))

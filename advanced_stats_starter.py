@@ -1,13 +1,8 @@
 import pandas as pd
-import numpy as np
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import GridSearchCV
-import sklearn.metrics as metrics
 
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
-
 
 # https://www.basketball-reference.com/about/glossary.html
 def get_pos(row):
