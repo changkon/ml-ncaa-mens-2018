@@ -21,7 +21,7 @@ def seed_to_int(seed):
     return s_int
 
 # lets use data from 2003-2013 to train the modal
-train = compact_playoff_results.loc[(compact_playoff_results['Season'] >= 2003) & (compact_playoff_results['Season'] <= 2013)]
+train = compact_playoff_results.loc[(compact_playoff_results['Season'] >= 2010) & (compact_playoff_results['Season'] <= 2013)]
 train = train.drop(['DayNum', 'WScore', 'LScore', 'WLoc', 'NumOT'], axis=1)
 
 train_stats = ['Season', 'TeamID', 'ORating', 'DRating']
@@ -52,6 +52,9 @@ train_copy[train_w_stat + train_l_stat] = train_copy[train_l_stat + train_w_stat
 train_copy['Result'] = 0
 
 train = pd.concat([train, train_copy], ignore_index=True)
+
+# Print to show training data used
+print(train.head(n=5))
 
 y_train = train['Result'].values
 X_train = train.drop('Result', axis=1)
