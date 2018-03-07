@@ -72,7 +72,7 @@ train = train.drop(['Season', 'WTeamID', 'LTeamID'], axis =1)
 train['Result'] = 1
 
 train_copy = train.copy()
-train_copy[['Season','Wscore', 'LScore','WLoc', 'margin', 'w_elo', 'l_elo','elo_diff']] = train_copy[['Season', 'Lscore', 'WScore','WLoc', 'margin', 'l_elo', 'w_elo','elo_diff']]
+train_copy[['Season','WScore', 'LScore','WLoc', 'margin', 'w_elo', 'l_elo','elo_diff']] = train_copy[['Season', 'LScore', 'WScore','WLoc', 'margin', 'l_elo', 'w_elo','elo_diff']]
 train_copy['Result'] = 0
 
 train = pd.concat([train,train_copy], ignore_index= True)
