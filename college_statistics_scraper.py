@@ -88,6 +88,7 @@ class CollegeStatisticsScraper(scrapy.Spider):
             player_oRating = advanced_statistic.css('td:nth-of-type(18) ::text').extract_first()
             player_dRating = advanced_statistic.css('td:nth-of-type(19) ::text').extract_first()
             player_per = advanced_statistic.css('td:nth-of-type(20) ::text').extract_first()
+            player_usage = advanced_statistic.css('td:nth-of-type(14) ::text').extract_first()
 
             yield {
                 'Season': season,
@@ -101,5 +102,6 @@ class CollegeStatisticsScraper(scrapy.Spider):
                 'Blk': blocks_per_game,
                 'ORtg': player_oRating,
                 'DRtg': player_dRating,
-                'Per': player_per
+                'Per': player_per,
+                'Usg': player_usage
             }
