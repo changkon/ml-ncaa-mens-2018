@@ -13,8 +13,8 @@ rs.drop(["NumOT"], axis=1, inplace=True)
 team_ids = set(rs.WTeamID).union(set(rs.LTeamID))
 elo_dict = dict(zip(list(team_ids), [1500] * len(team_ids))) #set all team ratings to 1500
 rs['margin'] = rs.WScore - rs.LScore # New columns to help us iteratively update elos
-rs['w_elo'] = None
-rs['l_elo'] = None
+rs['w_elo'] = 0
+rs['l_elo'] = 0
 #rs['elo_diff'] = None
 
 def elo_pred(elo1, elo2):
@@ -63,16 +63,40 @@ for i in range(rs.shape[0]):
 	# Stores new elos in the games dataframe
 	rs.loc[i, 'w_elo'] = elo_dict[w]
 	rs.loc[i, 'l_elo'] = elo_dict[l]
+	if i == 1000:
+		break
 
+print(rs.head(n=5))
+#getting final elos of team
+def final_elo_per_season(df, team_id):
+    d = df.copy()
+    d = d.loc[(d.WTeamID == team_id) | (d.LTeamID == team_id), :]
+    d.sort_values(['Season', 'DayNum'], inplace=True)
+    d.drop_duplicates(['Season'], keep='last', inplace=True)
+    w_mask = d.WTeamID == team_id
+    l_mask = d.LTeamID == team_id
+    d['season_elo'] = None
+    d.loc[w_mask, 'season_elo'] = d.loc[w_mask, 'w_elo']
+    d.loc[l_mask, 'season_elo'] = d.loc[l_mask, 'l_elo']
+    out = pd.DataFrame({
+        'team_id': team_id,
+        'season': d.Season,
+        'season_elo': d.season_elo
+    })
+    return(out)
+
+df_list = [final_elo_per_season(rs, i) for i in team_ids]
+season_elos = pd.concat(df_list)
+print(season_elos.head(n=5))
 #Using data from 2003-2013 Regular Season
 train = rs.loc[(rs['Season'] >= 2003) & (rs['Season'] <= 2013)]
 train = train.drop(['DayNum'], axis = 1)
 train['elo_diff'] = train.w_elo - train.l_elo
-train = train.drop(['Season', 'WTeamID', 'LTeamID'], axis =1)
+train = train.drop(['Season', 'WTeamID', 'LTeamID','WLoc', 'LScore','WScore', 'margin'], axis =1)
 train['Result'] = 1
 
 train_copy = train.copy()
-train_copy[['WScore', 'LScore','WLoc', 'margin', 'w_elo', 'l_elo','elo_diff']] = train_copy[['LScore', 'WScore','WLoc', 'margin', 'l_elo', 'w_elo','elo_diff']]
+train_copy[['w_elo', 'l_elo','elo_diff']] = train_copy[['l_elo', 'w_elo','elo_diff']]
 train_copy['Result'] = 0
 
 train = pd.concat([train,train_copy], ignore_index= True)
@@ -96,10 +120,13 @@ prediction['WTeamID'] = submission['ID'].str[5:9].astype(int)
 prediction['LTeamID'] = submission['ID'].str[10:].astype(int)
 
 # note merging LTeamID first then WTeamID so that the order is WTeamID ascending, same order as the submission
-prediction = prediction.merge(rs, on=['Season', 'LTeamID'])
-prediction = prediction.merge(rs, on=['Season', 'WTeamID'])
+season_elosL = season_elos.rename(columns={'team_id': 'LTeamID', 'season_elo': 'l_elo'})
+season_elosW = season_elos.rename(columns={'team_id': 'WTeamID', 'season_elo': 'w_elo'})
+
+prediction = prediction.merge(season_elosL, on=['season', 'LTeamID'])
+prediction = prediction.merge(season_elosW, on=['season', 'WTeamID'])
 prediction['elo_diff'] = prediction.w_elo - prediction.l_elo
-prediction = prediction.drop(['Season', 'WTeamID', 'LTeamID'], axis=1)
+prediction = prediction.drop(['season', 'WTeamID', 'LTeamID'], axis=1)
 
 submission['Pred'] = clf.predict_proba(prediction)
 simulate_submit(submission)
