@@ -17,6 +17,7 @@ rs['w_elo'] = 0
 rs['l_elo'] = 0
 #rs['elo_diff'] = None
 
+
 def elo_pred(elo1, elo2):
 	return(1. / (10. ** (-(elo1 - elo2) / 400.) + 1.))
 
@@ -63,8 +64,8 @@ for i in range(rs.shape[0]):
 	# Stores new elos in the games dataframe
 	rs.loc[i, 'w_elo'] = elo_dict[w]
 	rs.loc[i, 'l_elo'] = elo_dict[l]
-	if i == 1000:
-		break
+	#if i == 1000: remove for testing
+		#break
 
 print(rs.head(n=5))
 #getting final elos of team
@@ -85,8 +86,10 @@ def final_elo_per_season(df, team_id):
     })
     return(out)
 
+rs.to_csv('regelos.csv' ,encoding='utf-8', index=False)
 df_list = [final_elo_per_season(rs, i) for i in team_ids]
 season_elos = pd.concat(df_list)
+season_elos.to_csv('finalelos.csv',encoding='utf-8', index=False)
 print(season_elos.head(n=5))
 #Using data from 2003-2013 Regular Season
 train = rs.loc[(rs['Season'] >= 2003) & (rs['Season'] <= 2013)]
@@ -120,13 +123,13 @@ prediction['WTeamID'] = submission['ID'].str[5:9].astype(int)
 prediction['LTeamID'] = submission['ID'].str[10:].astype(int)
 
 # note merging LTeamID first then WTeamID so that the order is WTeamID ascending, same order as the submission
-season_elosL = season_elos.rename(columns={'team_id': 'LTeamID', 'season_elo': 'l_elo'})
-season_elosW = season_elos.rename(columns={'team_id': 'WTeamID', 'season_elo': 'w_elo'})
+season_elosL = season_elos.rename(columns={'season': 'Season', 'team_id': 'LTeamID', 'season_elo': 'l_elo'})
+season_elosW = season_elos.rename(columns={'season': 'Season','team_id': 'WTeamID', 'season_elo': 'w_elo'})
 
-prediction = prediction.merge(season_elosL, on=['season', 'LTeamID'])
-prediction = prediction.merge(season_elosW, on=['season', 'WTeamID'])
+prediction = prediction.merge(season_elosL, on=['Season', 'LTeamID'])
+prediction = prediction.merge(season_elosW, on=['Season', 'WTeamID'])
 prediction['elo_diff'] = prediction.w_elo - prediction.l_elo
-prediction = prediction.drop(['season', 'WTeamID', 'LTeamID'], axis=1)
+prediction = prediction.drop(['Season', 'WTeamID', 'LTeamID'], axis=1)
 
 submission['Pred'] = clf.predict_proba(prediction)
 simulate_submit(submission)
