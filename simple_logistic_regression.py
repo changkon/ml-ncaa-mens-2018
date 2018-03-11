@@ -67,16 +67,21 @@ lose_adj = adj_adv_stat_team_season.rename(columns={
     'AdjNRating': 'LAdjNRating'
 })
 
-train = train.merge(win_adj, on=['Season', 'WTeamID'])
-train = train.merge(lose_adj, on=['Season', 'LTeamID'])
+# uncomment to use adj rating
+# train = train.merge(win_adj, on=['Season', 'WTeamID'])
+# train = train.merge(lose_adj, on=['Season', 'LTeamID'])
 
 train = train.drop(['Season', 'WTeamID', 'LTeamID'], axis=1)
 train['Result'] = 1
 
 train_copy = train.copy()
 
-train_w_stat = ['WORating', 'WDRating', 'WSeed', 'WAdjNRating']
-train_l_stat = ['LORating', 'LDRating', 'LSeed', 'LAdjNRating']
+train_w_stat = ['WORating', 'WDRating', 'WSeed']
+train_l_stat = ['LORating', 'LDRating', 'LSeed']
+
+# uncomment to use adj rating
+# train_w_stat.append('WAdjNRating')
+# train_l_stat.append('LAdjNRating')
 
 train_copy[train_w_stat + train_l_stat] = train_copy[train_l_stat + train_w_stat]
 train_copy['SeedDiff'] = -train_copy['SeedDiff']
@@ -86,7 +91,6 @@ train = pd.concat([train, train_copy], ignore_index=True)
 
 # Print to show training data used
 print(train.head(n=5))
-print(train.tail())
 
 y_train = train['Result'].values
 X_train = train.drop('Result', axis=1)
@@ -110,13 +114,14 @@ prediction = prediction.merge(win_adv_stats, on=['Season', 'WTeamID'])
 
 prediction = prediction.merge(lossseeds, on=['Season', 'LTeamID'])
 prediction = prediction.merge(winseeds, on=['Season', 'WTeamID'])
-prediction['SeedDiff'] = prediction.WSeed - prediction.LSeed
+prediction['SeedDiff'] = prediction.LSeed - prediction.WSeed
 
-prediction = prediction.merge(lose_adj, on=['Season', 'LTeamID'])
-prediction = prediction.merge(win_adj, on=['Season', 'WTeamID'])
+# Uncomment to use adj rating
+# prediction = prediction.merge(lose_adj, on=['Season', 'LTeamID'])
+# prediction = prediction.merge(win_adj, on=['Season', 'WTeamID'])
 
 prediction = prediction.drop(['Season', 'WTeamID', 'LTeamID'], axis=1)
-
+print(prediction.head())
 submission['Pred'] = clf.predict_proba(prediction)
 simulate_submit(submission)
 
