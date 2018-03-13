@@ -333,12 +333,12 @@ def get_regular_season_temp():
             'LFourFactors': lFourFactors
         }
 
-        advanced_stats_per_game.append(new_row, ignore_index=True)
+        advanced_stats_per_game = advanced_stats_per_game.append(new_row, ignore_index=True)
 
     return advanced_stats_per_game
 
-john_adv = get_adv_stats_per_season_game()
-john_adv.to_csv('regular-season-adv.csv', index=False)
+# john_adv = get_adv_stats_per_season_game()
+# john_adv.to_csv('regular-season-adv.csv', index=False)
 
 alt_adv = get_regular_season_temp()
 alt_adv.to_csv('regular-season-alt-adv.csv', index=False)
