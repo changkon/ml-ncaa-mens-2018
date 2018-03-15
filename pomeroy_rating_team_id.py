@@ -227,7 +227,7 @@ pomeroy_rating = pomeroy_rating.drop_duplicates(['Season', 'TeamID'])
 print(pomeroy_rating.head())
 print(pomeroy_rating.isnull().values.any())
 print(pomeroy_rating.loc[(pomeroy_rating['TeamID'] == 1107) & (pomeroy_rating['Season'] == 2015)])
-pomeroy_rating.to_csv('p_rating_with_team_id.csv', index=False)
+# pomeroy_rating.to_csv('p_rating_with_team_id.csv', index=False)
 
 
 
